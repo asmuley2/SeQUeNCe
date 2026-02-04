@@ -4,9 +4,12 @@ This module provides a definition of the Topology class, which can be used to
 manage a network's structure.
 Topology instances automatically perform many useful network functions.
 """
+import json
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import TYPE_CHECKING
+
+import yaml
 
 if TYPE_CHECKING:
     from ..kernel.timeline import Timeline
@@ -44,16 +47,50 @@ class Topology(ABC):
         self.tl: Timeline | None = None
         self._load(conf_file_name)
 
-    @abstractmethod
     def _load(self, filename: str):
-        """Method for parsing configuration file and generate network
+        """Load configuration file and build the network.
+
+        Handles both JSON and YAML config files. Calls _get_templates()
+        then delegates to child's _build() method.
 
         Args:
-            filename (str): the name of configuration file
+            filename: path to the configuration file (JSON or YAML)
+        """
+        config = self._load_config(filename)
+        self._get_templates(config)
+        self._build(config)
+
+    def _load_config(self, filename: str) -> dict:
+        """Load configuration from JSON or YAML file.
+
+        Args:
+            filename: path to the configuration file
+
+        Returns:
+            Configuration dictionary
+        """
+        with open(filename) as fh:
+            if filename.endswith(('.yaml', '.yml')):
+                return yaml.safe_load(fh)
+            return json.load(fh)
+
+    @abstractmethod
+    def _build(self, config: dict):
+        """Build the network from configuration.
+
+        Child classes implement this to create nodes, channels, etc.
+
+        Args:
+            config: configuration dictionary
         """
         pass
 
     def _get_templates(self, config: dict) -> None:
+        """Extract templates from configuration.
+
+        Args:
+            config: configuration dictionary
+        """
         templates = config.get(ALL_TEMPLATES, {})
         self.templates = templates
 

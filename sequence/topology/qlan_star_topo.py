@@ -45,11 +45,7 @@ class QlanStarTopo(Topo):
         super().__init__(conf_file_name)
 
 
-    def _load(self, filename: str):
-        with open(filename) as fh:
-            config = json.load(fh)
-
-        self._get_templates(config)
+    def _build(self, config: dict):
         self._add_parameters(config)
 
         # quantum connections are only supported by sequential simulation so far
