@@ -1,8 +1,6 @@
-import json
 
 from .topology import Topology as Topo
 from .node import QKDNode
-from ..kernel.timeline import Timeline
 from ..constants import *
 
 
@@ -26,10 +24,6 @@ class QKDTopo(Topo):
         self._add_qchannels(config)
         self._add_cchannels(config)
         self._add_cconnections(config)
-
-    def _add_timeline(self, config):
-        stop_time = config.get(STOP_TIME, float('inf'))
-        self.tl = Timeline(stop_time)
 
     def _add_nodes(self, config):
         for node in config[ALL_NODE]:

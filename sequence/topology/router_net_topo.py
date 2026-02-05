@@ -1,4 +1,3 @@
-import json
 import numpy as np
 from networkx import Graph, dijkstra_path, exception
 
@@ -33,9 +32,9 @@ class RouterNetTopo(Topo):
         # quantum connections are only supported by sequential simulation so far
         self._add_qconnections(config)
         self._add_timeline(config)
-        self._map_bsm_routers(config) #net shared
-        self._add_nodes(config) #ALMOST shared by net, differ by few lines based on objects in node.py
-        self._add_bsm_node_to_router() #net shared
+        self._map_bsm_routers(config)
+        self._add_nodes(config)
+        self._add_bsm_node_to_router()
         self._add_qchannels(config)
         self._add_cchannels(config)
         self._add_cconnections(config)
@@ -47,14 +46,6 @@ class RouterNetTopo(Topo):
         truncation = config.get(TRUNC, 1)
         QuantumManager.set_global_manager_formalism(formalism)
         self.tl = Timeline(stop_time=stop_time, truncation=truncation)
-
-    def _map_bsm_routers(self, config):
-        for qc in config[ALL_Q_CHANNEL]:
-            src, dst = qc[SRC], qc[DST]
-            if dst in self.bsm_to_router_map:
-                self.bsm_to_router_map[dst].append(src)
-            else:
-                self.bsm_to_router_map[dst] = [src]
 
     def _add_nodes(self, config: dict):
         for node in config[ALL_NODE]:
@@ -75,16 +66,6 @@ class RouterNetTopo(Topo):
 
             node_obj.set_seed(seed)
             self.nodes[node_type].append(node_obj)
-
-    def _add_bsm_node_to_router(self):
-        for bsm in self.bsm_to_router_map:
-            r0_str, r1_str = self.bsm_to_router_map[bsm]
-            r0 = self.tl.get_entity_by_name(r0_str)
-            r1 = self.tl.get_entity_by_name(r1_str)
-            if r0 is not None:
-                r0.add_bsm_node(bsm, r1_str)
-            if r1 is not None:
-                r1.add_bsm_node(bsm, r0_str)
 
     def _add_qconnections(self, config: dict):
         """generate bsm_info, qc_info, and cc_info for the q_connections."""

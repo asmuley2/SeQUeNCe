@@ -7,12 +7,12 @@ Topology instances automatically perform many useful network functions.
 import json
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import TYPE_CHECKING
+# from typing import TYPE_CHECKING
 
 import yaml
 
-if TYPE_CHECKING:
-    from ..kernel.timeline import Timeline
+# Direct import needed for _add_timeline() default implementation
+from ..kernel.timeline import Timeline
 
 from .node import *
 from ..components.optical_channel import QuantumChannel, ClassicalChannel
@@ -93,6 +93,28 @@ class Topology(ABC):
         """
         templates = config.get(ALL_TEMPLATES, {})
         self.templates = templates
+
+    def _add_timeline(self, config: dict):
+        stop_time = config.get(STOP_TIME, float('inf'))
+        self.tl = Timeline(stop_time)
+
+    def _map_bsm_routers(self, config):
+        for qc in config.get(ALL_Q_CHANNEL, []):
+            src, dst = qc[SRC], qc[DST]
+            if dst in self.bsm_to_router_map:
+                self.bsm_to_router_map[dst].append(src)
+            else:
+                self.bsm_to_router_map[dst] = [src]
+
+    def _add_bsm_node_to_router(self):
+        for bsm in self.bsm_to_router_map:
+            r0_str, r1_str = self.bsm_to_router_map[bsm]
+            r0 = self.tl.get_entity_by_name(r0_str)
+            r1 = self.tl.get_entity_by_name(r1_str)
+            if r0 is not None:
+                r0.add_bsm_node(bsm, r1_str)
+            if r1 is not None:
+                r1.add_bsm_node(bsm, r0_str)
 
     def _add_qchannels(self, config: dict) -> None:
         for qc in config.get(ALL_Q_CHANNEL, []):

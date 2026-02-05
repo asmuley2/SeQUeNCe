@@ -3,7 +3,6 @@ import numpy as np
 from networkx import Graph, dijkstra_path, exception
 
 from .topology import Topology as Topo
-from ..kernel.timeline import Timeline
 from .node import BSMNode
 from .node import Node, DQCNode
 from ..constants import *
@@ -33,25 +32,13 @@ class DQCNetTopo(Topo):
         # quantum connections are only supported by sequential simulation so far
         self._add_qconnections(config)
         self._add_timeline(config)
-        self._map_bsm_routers(config) #net shared
-        self._add_nodes(config) #ALMOST shared by net, differ by few lines based on objects in node.py
-        self._add_bsm_node_to_router() #net shared
+        self._map_bsm_routers(config)
+        self._add_nodes(config)
+        self._add_bsm_node_to_router()
         self._add_qchannels(config)
         self._add_cchannels(config)
         self._add_cconnections(config)
         self._generate_forwarding_table(config)
-
-    def _add_timeline(self, config: dict):
-        stop_time = config.get(STOP_TIME, float('inf'))
-        self.tl = Timeline(stop_time)
-
-    def _map_bsm_routers(self, config):
-        for qc in config[ALL_Q_CHANNEL]:
-            src, dst = qc[SRC], qc[DST]
-            if dst in self.bsm_to_router_map:
-                self.bsm_to_router_map[dst].append(src)
-            else:
-                self.bsm_to_router_map[dst] = [src]
 
     def _add_nodes(self, config: dict):
         for node in config[ALL_NODE]:
@@ -73,16 +60,6 @@ class DQCNetTopo(Topo):
 
             node_obj.set_seed(seed)
             self.nodes[node_type].append(node_obj)
-
-    def _add_bsm_node_to_router(self):
-        for bsm in self.bsm_to_router_map:
-            r0_str, r1_str = self.bsm_to_router_map[bsm]
-            r0 = self.tl.get_entity_by_name(r0_str)
-            r1 = self.tl.get_entity_by_name(r1_str)
-            if r0 is not None:
-                r0.add_bsm_node(bsm, r1_str)
-            if r1 is not None:
-                r1.add_bsm_node(bsm, r0_str)
 
     def _add_qconnections(self, config: dict):
         """generate bsm_info, qc_info, and cc_info for the q_connections."""
@@ -226,9 +203,3 @@ class DQCNetTopo(Topo):
             data_owners[owner][q] = slot
 
         return data_owners
-
-    def get_timeline(self) -> Timeline:
-        return self.tl
-
-    def get_nodes(self) -> dict[str, list[Node]]:
-        return self.nodes  

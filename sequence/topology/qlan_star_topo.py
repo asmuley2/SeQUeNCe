@@ -1,8 +1,6 @@
-import json
 import numpy as np
 
 from .topology import Topology as Topo
-from ..kernel.timeline import Timeline
 from ..constants import *
 
 from .qlan.orchestrator import QlanOrchestratorNode
@@ -57,10 +55,6 @@ class QlanStarTopo(Topo):
         self._add_cchannels(config)
         self._add_cconnections(config)
         self._add_protocols()
-
-    def _add_timeline(self, config: dict):
-        stop_time = config.get(STOP_TIME, float('inf'))
-        self.tl = Timeline(stop_time)
 
     def _add_parameters(self, config: dict):
 
