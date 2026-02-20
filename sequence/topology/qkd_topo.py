@@ -1,5 +1,5 @@
-
 from .topology import Topology as Topo
+from .network_impls import NoOpNetworkImpl
 from .node import QKDNode
 from .const_topo import QKD_NODE, STOP_TIME, ALL_NODE, SEED, TYPE, NAME, TEMPLATE
 from ..kernel.timeline import Timeline
@@ -22,6 +22,9 @@ class QKDTopo(Topo):
     _deprecated_attrs = {
         "QKD_NODE": QKD_NODE,
     }
+
+    def __init__(self, conf_file_name: str):
+        super().__init__(conf_file_name, NoOpNetworkImpl())
 
     def _add_timeline(self, config):
         stop_time = config.get(STOP_TIME, float('inf'))
